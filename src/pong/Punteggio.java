@@ -3,6 +3,7 @@
 package pong;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,8 +19,13 @@ import java.util.List;
  * I test ufficiali (cartella test) controllano i contratti.
  */
 public class Punteggio {
+    private final int puntiPerVincere;
+    private final int scartoMinimo;
 
-    // scrivete qui i campi che vi servono
+    private final int[] punteggio;
+    private Lato vincitore;
+
+    private final List<Lato> storia;
 
     /**
      * Una partita nuova, 0 a 0, con la sua regola per vincere.
@@ -27,7 +33,45 @@ public class Punteggio {
      * Promette: una partita 0 a 0, non finita, senza vincitore e con la storia vuota.
      */
     public Punteggio(int puntiPerVincere, int scartoMinimo) {
-        // scrivete qui
+        if (puntiPerVincere < 1) {
+            throw new IllegalArgumentException("puntiPerVincere deve essere almeno 1");
+        }
+        if (scartoMinimo < 1) {
+            throw new IllegalArgumentException("scartoMinimo deve essere almeno 1");
+        }
+        
+        this.punteggio = new int[Lato.values().length];
+        this.vincitore = null;
+
+        this.puntiPerVincere = puntiPerVincere;
+        this.scartoMinimo = scartoMinimo;
+
+        this.storia = new ArrayList<>();
+    }
+
+    private void controllaVincitore() {
+        this.vincitore = null;
+        for (Lato lato : Lato.values()) {
+            if (this.punteggio[lato.ordinal()] >= this.puntiPerVincere) {
+                int hig = 0;
+                for (Lato nlato : Lato.values()) {
+                    if (lato == nlato) {
+                        continue;
+                    }
+
+                    if (this.punteggio[nlato.ordinal()] > hig) {
+                        hig = this.punteggio[nlato.ordinal()];
+                    }
+                }
+
+                if (this.punteggio[lato.ordinal()] - hig < this.scartoMinimo) {
+                    continue;
+                } else {
+                    this.vincitore = lato;
+                    return;
+                }
+            }
+        }
     }
 
     /**
@@ -39,7 +83,18 @@ public class Punteggio {
      *           Se la partita era già finita, non cambia niente.
      */
     public void segnaPunto(Lato chi) {
-        // scrivete qui
+        if (chi == null) {
+            throw new IllegalArgumentException("il lato non deve essere null");
+        }
+
+        if (this.isFinita()) {
+            return;
+        }
+
+        this.punteggio[chi.ordinal()]++;
+        this.storia.add(chi);
+
+        controllaVincitore();
     }
 
     /**
@@ -47,21 +102,25 @@ public class Punteggio {
      * Promette: i punti del lato chi. Non cambia niente.
      */
     public int getPunti(Lato chi) {
-        return 0; // scrivete qui
+        if (chi == null) {
+            throw new IllegalArgumentException("il lato non deve essere null");
+        }
+
+        return this.punteggio[chi.ordinal()];
     }
 
     /**
      * Promette: vero se la partita è finita, cioè se un lato ha vinto. Non cambia niente.
      */
     public boolean isFinita() {
-        return false; // scrivete qui
+        return this.vincitore != null;
     }
 
     /**
      * Promette: il lato che ha vinto; null se la partita non è finita. Non cambia niente.
      */
     public Lato getVincitore() {
-        return null; // scrivete qui
+        return this.vincitore;
     }
 
     /**
@@ -73,7 +132,15 @@ public class Punteggio {
      *           niente.
      */
     public void annullaUltimoPunto() {
-        // scrivete qui
+        if (this.storia.isEmpty()) {
+            return;
+        }
+
+        Lato lscor = this.storia.removeLast();
+
+        this.punteggio[lscor.ordinal()]--;
+
+        controllaVincitore();
     }
 
     /**
@@ -87,7 +154,7 @@ public class Punteggio {
      *           segnati dopo; chi la usa non deve contare né sull'una né sull'altra cosa.
      */
     public List<Lato> getStoria() {
-        return new ArrayList<>(); // scrivete qui
+        return new ArrayList<>(this.storia);
     }
 
     /**
@@ -96,6 +163,8 @@ public class Punteggio {
      * Promette: 0 a 0, non finita, senza vincitore, storia vuota; la regola per vincere non cambia.
      */
     public void azzera() {
-        // scrivete qui
+        Arrays.fill(this.punteggio, 0);
+        this.vincitore = null;
+        this.storia.clear();
     }
 }
